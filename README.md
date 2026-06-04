@@ -106,6 +106,18 @@ println!("Hamming similarity: {:.3}", hamming_similarity(&data, &data));
 3. **Streaming aggregation** — Merge sketches from distributed ternary data sources without storing raw data
 4. **Real-time deduplication** — Bloom filters for ternary event streams where exact membership isn't required
 
+## Known Limitations
+
+- **BloomFilter membership heuristic is fragile**: `TernaryBloomFilter::contains()` uses a hardcoded count threshold (≤3 → `Yes`, else → `Maybe`) to distinguish definite membership from possible false positives. This breaks down quickly — inserting more than 3 items means every match returns `Maybe`, even if the filter is sparse. The threshold should scale with filter capacity and item count.
+
+- **MinHash operates on individual trits, not sets**: `TernaryMinHash::push()` hashes one trit at a time, so the sketch treats `[Pos, Pos, Pos]` as three separate items rather than a weighted set. This means Jaccard estimation reflects element frequency, not set membership — calling `push_slice(&[Pos, Pos])` twice gives a different result than `push(Pos)` four times.
+
+- **LSH band hashing ignores vector length**: `TernaryLSH::hash()` computes band signatures from the first `rows_per_band` elements of each band's range. If the input vector is shorter than `num_bands × rows_per_band`, later bands hash fewer elements, making short vectors more likely to collide spuriously.
+
+- **TernarySketch similarity is count-based, not order-aware**: `TernarySketch::similarity()` computes cosine similarity over per-value counts `[neg, zero, pos]`, discarding sequence order entirely. `[1, 0, -1]` and `[-1, 0, 1]` produce identical sketches (same counts), so similarity is 1.0 despite being opposite sequences.
+
+- **Rolling hash has no removal operation**: `TernaryHash` supports incremental `update()` but cannot remove old elements, so it cannot maintain a sliding-window hash without recomputing from scratch.
+
 ## Ecosystem
 
 Part of the **SuperInstance** ternary computing crate family:
