@@ -135,3 +135,11 @@ Part of the **SuperInstance** ternary computing crate family:
 ## License
 
 MIT
+
+## See Also
+- **ternary-codes** — related
+- **ternary-compression** — related
+- **ternary-diff** — related
+- **ternary-steganography** — related
+- **ternary-database** — related
+
